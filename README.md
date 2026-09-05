@@ -1,93 +1,103 @@
 # STICKCPLUS2-Thermometer
 
-M5StickC Plus2 と GY-906（MLX90614）を使用した非接触赤外線温度計です。
+**English** \| [日本語](README.ja.md)
 
-通常時は対象物の温度をリアルタイム表示し、BtnAを押している間に測定、指を離した時点で直近の測定値から中央値を求めて結果をHOLDします。
+A non-contact infrared thermometer built with an M5StickC Plus2 and a
+GY-906 (MLX90614).
+
+In normal operation, the device displays the target temperature in real
+time. Hold BtnA to measure continuously, then release the button to
+calculate the median of the latest samples and HOLD the result on
+screen.
 
 ## Photos
 
+```{=html}
 <p align="center">
-  <img src="assets/IMG_9556.jpg" width="32%">
-  <img src="assets/IMG_9557.jpg" width="32%">
-  <img src="assets/IMG_9558.jpg" width="32%">
+```
+`<img src="assets/IMG_9556.jpg" width="32%">`{=html}
+`<img src="assets/IMG_9557.jpg" width="32%">`{=html}
+`<img src="assets/IMG_9558.jpg" width="32%">`{=html}
+```{=html}
 </p>
-
+```
 ## Hardware
 
-- M5StickC Plus2
-- GY-906 / MLX90614 赤外線温度センサー
-  - 使用中のモジュールは狭角タイプ（DCI系）
-- Grove接続用配線
+-   M5StickC Plus2
+-   GY-906 / MLX90614 infrared temperature sensor
+    -   The module used in this project is a narrow-FOV DCI-type version
+-   Grove wiring
 
 ## Wiring
 
-GY-906 と M5StickC Plus2 の Grove ポートを以下のように接続します。
+Connect the GY-906 to the Grove port on the M5StickC Plus2 as follows.
 
-| GY-906 | M5StickC Plus2 |
-|---|---|
-| VIN | 5V |
-| GND | GND |
-| SCL | G32 |
-| SDA | G33 |
+  GY-906   M5StickC Plus2
+  -------- ----------------
+  VIN      5V
+  GND      GND
+  SCL      G32
+  SDA      G33
 
-I2C設定:
+I2C configuration:
 
-```cpp
+``` cpp
 constexpr int SDA_PIN = 33;
 constexpr int SCL_PIN = 32;
 constexpr uint8_t MLX_ADDR = 0x5A;
 ```
 
-> この構成では M5StickC Plus2 の Grove 側 GPIO32 / GPIO33 を I2C として使用します。
+> This configuration uses GPIO32 / GPIO33 on the M5StickC Plus2 Grove
+> port for I2C.
 
 ## Required Libraries
 
-Arduino IDE で以下のライブラリを使用します。
+The sketch uses the following libraries with Arduino IDE:
 
-- M5StickCPlus2
-- Adafruit MLX90614
-- Wire
+-   M5StickCPlus2
+-   Adafruit MLX90614
+-   Wire
 
-スケッチ:
+Sketch:
 
-```text
+``` text
 STICKCPLUS2-Thermometer.ino
 ```
 
 ## Operation
 
-動作は3つの状態で構成されています。
+The device uses three operating states.
 
-```text
+``` text
 LIVE
   │
-  │ BtnAを押す
+  │ Press BtnA
   ▼
 MEASURING
   │
-  │ BtnAを押している間、測定を継続
+  │ Continue measuring while BtnA is held
   │
-  │ BtnAから指を離す
+  │ Release BtnA
   ▼
 HOLD
   │
-  │ 60秒経過
+  │ After 60 seconds
   ▼
 LIVE
 ```
 
 ### LIVE
 
-起動後の通常状態です。
+The normal state after startup.
 
-- 約150ms間隔で温度を取得
-- 対象物温度をリアルタイム表示
-- EMAで表示値を平滑化
-- BtnAを押すと `MEASURING` へ移行
+-   Reads the temperature approximately every 150 ms
+-   Displays the target temperature in real time
+-   Smooths the displayed value using an EMA
+-   Pressing BtnA enters `MEASURING`
 
-表示例:
+Example:
 
-```text
+``` text
        26.7
 
 LIVE  Ambient 25.4 C
@@ -95,17 +105,17 @@ LIVE  Ambient 25.4 C
 
 ### MEASURING
 
-BtnAを押している間の測定状態です。
+Active while BtnA is held down.
 
-- 温度測定を継続
-- 表示値はリアルタイム更新
-- HOLD確定用として生の対象物温度を保持
-- 常に直近最大5サンプルを使用
-- BtnAから指を離すと測定結果を確定
+-   Continues taking temperature measurements
+-   Updates the displayed temperature in real time
+-   Stores raw object-temperature samples for the final HOLD result
+-   Keeps up to the latest five samples
+-   Releasing BtnA finalizes the measurement
 
-表示例:
+Example:
 
-```text
+``` text
        26.8
 
 MEAS  Ambient 25.4 C
@@ -113,49 +123,55 @@ MEAS  Ambient 25.4 C
 
 ### HOLD
 
-BtnAから指を離した瞬間に移行します。
+Entered immediately when BtnA is released.
 
-MEASURING中の直近最大5点の生データから中央値を求め、その値を測定結果として固定表示します。
+The device calculates the median of up to the latest five raw samples
+collected during MEASURING and displays that value as the fixed
+measurement result.
 
-表示例:
+Example:
 
-```text
+``` text
        26.8
 
 HOLD  Ambient 25.4 C
 ```
 
-HOLDは60秒間継続し、その後自動的にLIVEへ戻ります。
+The result remains in HOLD for 60 seconds, after which the device
+automatically returns to LIVE.
 
-HOLD中にBtnAを押した場合は、60秒を待たずにLIVEへ戻ります。
+Pressing BtnA while in HOLD cancels HOLD immediately and returns to
+LIVE.
 
 ## Measurement Processing
 
 ### Realtime display
 
-LIVEおよびMEASURINGの表示にはEMA（指数移動平均）を使用します。
+The LIVE and MEASURING displays use an exponential moving average (EMA):
 
-```text
+``` text
 filtered = 0.35 × raw + 0.65 × previous
 ```
 
-設定値:
+Configuration:
 
-```cpp
+``` cpp
 constexpr float EMA_ALPHA = 0.35f;
 ```
 
-センサーを手持ちした際の細かな揺れによる表示のちらつきを抑える目的です。
+This reduces small fluctuations in the displayed value when the sensor
+is handheld.
 
 ### HOLD result
 
-HOLD値にはEMA値を使用しません。
+The HOLD result does not use the EMA value.
 
-MEASURING中に取得した**直近最大5点の生データの中央値**を使用します。
+Instead, it uses the **median of up to the latest five raw
+object-temperature samples** collected during MEASURING.
 
-例:
+Example:
 
-```text
+``` text
 26.7
 26.8
 27.5
@@ -163,9 +179,9 @@ MEASURING中に取得した**直近最大5点の生データの中央値**を使
 26.8
 ```
 
-ソートすると:
+Sorted:
 
-```text
+``` text
 26.7
 26.8
 26.8
@@ -173,63 +189,70 @@ MEASURING中に取得した**直近最大5点の生データの中央値**を使
 27.5
 ```
 
-HOLD値:
+HOLD result:
 
-```text
+``` text
 26.8 C
 ```
 
-一時的に測定位置がずれた場合などの外れ値の影響を受けにくくするためです。
+Using the median reduces the effect of transient outliers, such as a
+brief aiming error.
 
-短時間のボタン操作で5点に満たない場合は、取得できたサンプルから中央値を計算します。
+If fewer than five samples are collected during a very short button
+press, the median is calculated from the available samples.
 
 ## Timing
 
-| 項目 | 設定 |
-|---|---:|
-| 温度取得間隔 | 150 ms |
-| HOLD時間 | 60秒 |
-| 自動Power Off | 最後のボタン操作から300秒 |
-| HOLD用サンプル | 直近5点 |
-| EMA係数 | 0.35 |
+  Item                                                                  Setting
+  ------------------------------- ---------------------------------------------
+  Temperature sampling interval                                          150 ms
+  HOLD duration                                                      60 seconds
+  Automatic power off               300 seconds after the last button operation
+  HOLD samples                                                         Latest 5
+  EMA coefficient                                                          0.35
 
 ## Display
 
-M5StickC Plus2 の 240 × 135 LCD を横向きで使用します。
+The 240 × 135 LCD on the M5StickC Plus2 is used in landscape
+orientation.
 
-- 対象物温度: 大型表示
-- LIVE: シアン
-- MEAS: グリーン
-- HOLD: イエロー
-- Ambient: 画面下部に小さく表示
+-   Object temperature: large central display
+-   LIVE: cyan
+-   MEAS: green
+-   HOLD: yellow
+-   Ambient temperature: small text at the bottom
 
-描画には `M5Canvas` のSpriteを使用し、画面全体をバッファへ描画してからLCDへ転送します。
+Rendering uses an `M5Canvas` sprite. The complete frame is drawn to the
+buffer before being transferred to the LCD.
 
 ## Sensor Initialization
 
-MLX90614 のI2Cアドレスは `0x5A` です。
+The MLX90614 uses I2C address `0x5A`.
 
-起動時には最大10回の初期化リトライを行います。
+At startup, sensor initialization is retried up to 10 times.
 
-```text
+``` text
 Attempt 1/10: 0x5A found, MLX90614 OK
 ```
 
-センサーを認識できない場合は画面にエラーを表示します。
+If the sensor cannot be detected, an error message is displayed on the
+screen.
 
 ## Power Management
 
-最後のBtnA操作から300秒経過すると、自動的にPower Offします。
+The device automatically powers off 300 seconds after the last BtnA
+operation.
 
-温度変化や通常のLIVE測定はユーザー操作とはみなされません。
+Normal LIVE measurements and temperature changes are not treated as user
+activity.
 
 ## Serial Monitor
 
-デバッグ時は115200 bpsでSerial Monitorを使用できます。
+For debugging, use the Serial Monitor at 115200 bps.
 
-代表的なログ:
+Example output:
 
-```text
+``` text
 STATE -> LIVE
 
 BTN A: PRESS
@@ -246,31 +269,38 @@ STATE -> HOLD result=26.83 C samples=5 read=OK
 
 ## Notes
 
-MLX90614は対象物から放射される赤外線を測定する非接触温度センサーです。
+The MLX90614 is a non-contact infrared sensor that measures infrared
+radiation emitted by a target.
 
-測定結果は以下の影響を受けます。
+Measurements are affected by factors including:
 
-- 対象物との距離
-- センサーの視野角（FOV）
-- 対象物の放射率
-- 測定対象が視野内を十分に占めているか
-- ガラスなど赤外線を透過しにくい物体越しの測定
+-   Distance to the target
+-   Sensor field of view (FOV)
+-   Target emissivity
+-   Whether the target sufficiently fills the sensor's field of view
+-   Measurement through materials such as glass that do not transmit the
+    relevant infrared wavelengths well
 
-狭角センサーでも、距離が離れるほど測定範囲は広がります。小さな対象を測る場合は、測定距離を短くする方が安定します。
+Even with a narrow-FOV sensor, the measurement area becomes larger as
+the distance increases. For small targets, shorter measurement distances
+generally provide more stable results.
 
 ## Future Ideas
 
-今後の拡張候補:
+Possible future extensions:
 
-- Wi-Fi接続
-- HOLD確定時のMQTT publish
-- Home Assistant連携
-- NTP時刻同期
-- 測定履歴保存
-- バッテリー残量表示
-- OTAアップデート
+-   Wi-Fi connectivity
+-   MQTT publish when a HOLD result is finalized
+-   Home Assistant integration
+-   NTP time synchronization
+-   Measurement history
+-   Battery level display
+-   OTA firmware updates
 
-ネットワーク機能を追加する場合も、温度計そのものはネットワーク障害に依存せず動作し、HOLD確定後のデータ送信だけを追加する構成が適しています。
+If network features are added, the thermometer should remain fully
+usable without network connectivity. A suitable design is to keep
+measurement local and only transmit data after a HOLD result has been
+finalized.
 
 ## License
 
