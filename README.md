@@ -8,9 +8,11 @@ In normal operation, the device displays the target temperature in real time. Ho
 
 ## Photos
 
-| | | |
-|---|---|---|
-| ![](assets/IMG_9556.jpg) | ![](assets/IMG_9557.jpg) | ![](assets/IMG_9558.jpg) |
+<p align="center">
+  <img src="assets/IMG_9556.jpg" width="32%">
+  <img src="assets/IMG_9557.jpg" width="32%">
+  <img src="assets/IMG_9558.jpg" width="32%">
+</p>
 
 ## Hardware
 

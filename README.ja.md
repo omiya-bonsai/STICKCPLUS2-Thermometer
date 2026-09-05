@@ -8,9 +8,13 @@ M5StickC Plus2 と GY-906（MLX90614）を使用した非接触赤外線温度�
 
 ## 写真
 
-| | | |
-|---|---|---|
-| ![](assets/IMG_9556.jpg) | ![](assets/IMG_9557.jpg) | ![](assets/IMG_9558.jpg) |
+## 写真
+
+<p align="center">
+  <img src="assets/IMG_9556.jpg" width="32%">
+  <img src="assets/IMG_9557.jpg" width="32%">
+  <img src="assets/IMG_9558.jpg" width="32%">
+</p>
 
 ## ハードウェア
 
