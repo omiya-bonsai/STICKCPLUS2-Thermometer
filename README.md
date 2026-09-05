@@ -1,49 +1,56 @@
 # STICKCPLUS2-Thermometer
 
-M5StickC Plus2 と GY-906（MLX90614）を使用した、非接触赤外線温度計です。
+M5StickC Plus2 と GY-906（MLX90614）を使用した非接触赤外線温度計です。
 
 通常時は対象物の温度をリアルタイム表示し、BtnAを押している間に測定、指を離した時点で直近の測定値から中央値を求めて結果をHOLDします。
 
+## Photos
+
+<p align="center">
+  <img src="assets/IMG_9556.jpg" width="32%">
+  <img src="assets/IMG_9557.jpg" width="32%">
+  <img src="assets/IMG_9558.jpg" width="32%">
+</p>
+
 ## Hardware
 
--   M5StickC Plus2
--   GY-906 / MLX90614 赤外線温度センサー
-    -   使用中のモジュールは狭角タイプ（DCI系）
--   Grove接続用配線
+- M5StickC Plus2
+- GY-906 / MLX90614 赤外線温度センサー
+  - 使用中のモジュールは狭角タイプ（DCI系）
+- Grove接続用配線
 
 ## Wiring
 
 GY-906 と M5StickC Plus2 の Grove ポートを以下のように接続します。
 
-  GY-906   M5StickC Plus2
-  -------- ----------------
-  VIN      5V
-  GND      GND
-  SCL      G32
-  SDA      G33
+| GY-906 | M5StickC Plus2 |
+|---|---|
+| VIN | 5V |
+| GND | GND |
+| SCL | G32 |
+| SDA | G33 |
 
 I2C設定:
 
-``` cpp
+```cpp
 constexpr int SDA_PIN = 33;
 constexpr int SCL_PIN = 32;
 constexpr uint8_t MLX_ADDR = 0x5A;
 ```
 
-> この構成では M5StickC Plus2 の Grove 側 GPIO32 / GPIO33 を I2C
-> として使用します。
+> この構成では M5StickC Plus2 の Grove 側 GPIO32 / GPIO33 を I2C として使用します。
 
 ## Required Libraries
 
 Arduino IDE で以下のライブラリを使用します。
 
--   M5StickCPlus2
--   Adafruit MLX90614
--   Wire
+- M5StickCPlus2
+- Adafruit MLX90614
+- Wire
 
 スケッチ:
 
-``` text
+```text
 STICKCPLUS2-Thermometer.ino
 ```
 
@@ -51,7 +58,7 @@ STICKCPLUS2-Thermometer.ino
 
 動作は3つの状態で構成されています。
 
-``` text
+```text
 LIVE
   │
   │ BtnAを押す
@@ -73,14 +80,14 @@ LIVE
 
 起動後の通常状態です。
 
--   約150ms間隔で温度を取得
--   対象物温度をリアルタイム表示
--   EMAで表示値を平滑化
--   BtnAを押すと `MEASURING` へ移行
+- 約150ms間隔で温度を取得
+- 対象物温度をリアルタイム表示
+- EMAで表示値を平滑化
+- BtnAを押すと `MEASURING` へ移行
 
 表示例:
 
-``` text
+```text
        26.7
 
 LIVE  Ambient 25.4 C
@@ -90,15 +97,15 @@ LIVE  Ambient 25.4 C
 
 BtnAを押している間の測定状態です。
 
--   温度測定を継続
--   表示値はリアルタイム更新
--   HOLD確定用として生の対象物温度を保持
--   常に直近最大5サンプルを使用
--   BtnAから指を離すと測定結果を確定
+- 温度測定を継続
+- 表示値はリアルタイム更新
+- HOLD確定用として生の対象物温度を保持
+- 常に直近最大5サンプルを使用
+- BtnAから指を離すと測定結果を確定
 
 表示例:
 
-``` text
+```text
        26.8
 
 MEAS  Ambient 25.4 C
@@ -112,7 +119,7 @@ MEASURING中の直近最大5点の生データから中央値を求め、その�
 
 表示例:
 
-``` text
+```text
        26.8
 
 HOLD  Ambient 25.4 C
@@ -128,13 +135,13 @@ HOLD中にBtnAを押した場合は、60秒を待たずにLIVEへ戻ります。
 
 LIVEおよびMEASURINGの表示にはEMA（指数移動平均）を使用します。
 
-``` text
+```text
 filtered = 0.35 × raw + 0.65 × previous
 ```
 
 設定値:
 
-``` cpp
+```cpp
 constexpr float EMA_ALPHA = 0.35f;
 ```
 
@@ -148,7 +155,7 @@ MEASURING中に取得した**直近最大5点の生データの中央値**を使
 
 例:
 
-``` text
+```text
 26.7
 26.8
 27.5
@@ -158,7 +165,7 @@ MEASURING中に取得した**直近最大5点の生データの中央値**を使
 
 ソートすると:
 
-``` text
+```text
 26.7
 26.8
 26.8
@@ -168,7 +175,7 @@ MEASURING中に取得した**直近最大5点の生データの中央値**を使
 
 HOLD値:
 
-``` text
+```text
 26.8 C
 ```
 
@@ -178,26 +185,25 @@ HOLD値:
 
 ## Timing
 
-  項目                                    設定
-  ---------------- ---------------------------
-  温度取得間隔                          150 ms
-  HOLD時間                                60秒
-  自動Power Off      最後のボタン操作から300秒
-  HOLD用サンプル                       直近5点
-  EMA係数                                 0.35
+| 項目 | 設定 |
+|---|---:|
+| 温度取得間隔 | 150 ms |
+| HOLD時間 | 60秒 |
+| 自動Power Off | 最後のボタン操作から300秒 |
+| HOLD用サンプル | 直近5点 |
+| EMA係数 | 0.35 |
 
 ## Display
 
 M5StickC Plus2 の 240 × 135 LCD を横向きで使用します。
 
--   対象物温度: 大型表示
--   LIVE: シアン
--   MEAS: グリーン
--   HOLD: イエロー
--   Ambient: 画面下部に小さく表示
+- 対象物温度: 大型表示
+- LIVE: シアン
+- MEAS: グリーン
+- HOLD: イエロー
+- Ambient: 画面下部に小さく表示
 
-描画には `M5Canvas`
-のSpriteを使用し、画面全体をバッファへ描画してからLCDへ転送します。
+描画には `M5Canvas` のSpriteを使用し、画面全体をバッファへ描画してからLCDへ転送します。
 
 ## Sensor Initialization
 
@@ -205,7 +211,7 @@ MLX90614 のI2Cアドレスは `0x5A` です。
 
 起動時には最大10回の初期化リトライを行います。
 
-``` text
+```text
 Attempt 1/10: 0x5A found, MLX90614 OK
 ```
 
@@ -223,7 +229,7 @@ Attempt 1/10: 0x5A found, MLX90614 OK
 
 代表的なログ:
 
-``` text
+```text
 STATE -> LIVE
 
 BTN A: PRESS
@@ -244,11 +250,11 @@ MLX90614は対象物から放射される赤外線を測定する非接触温度
 
 測定結果は以下の影響を受けます。
 
--   対象物との距離
--   センサーの視野角（FOV）
--   対象物の放射率
--   測定対象が視野内を十分に占めているか
--   ガラスなど赤外線を透過しにくい物体越しの測定
+- 対象物との距離
+- センサーの視野角（FOV）
+- 対象物の放射率
+- 測定対象が視野内を十分に占めているか
+- ガラスなど赤外線を透過しにくい物体越しの測定
 
 狭角センサーでも、距離が離れるほど測定範囲は広がります。小さな対象を測る場合は、測定距離を短くする方が安定します。
 
@@ -256,12 +262,18 @@ MLX90614は対象物から放射される赤外線を測定する非接触温度
 
 今後の拡張候補:
 
--   Wi-Fi接続
--   HOLD確定時のMQTT publish
--   Home Assistant連携
--   NTP時刻同期
--   測定履歴保存
--   バッテリー残量表示
--   OTAアップデート
+- Wi-Fi接続
+- HOLD確定時のMQTT publish
+- Home Assistant連携
+- NTP時刻同期
+- 測定履歴保存
+- バッテリー残量表示
+- OTAアップデート
 
 ネットワーク機能を追加する場合も、温度計そのものはネットワーク障害に依存せず動作し、HOLD確定後のデータ送信だけを追加する構成が適しています。
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+Copyright (c) 2026 omiya-bonsai
